@@ -267,9 +267,15 @@ void AssignAST_2::generator(){
                 tiggerCode.push_back("\tt3[0] = t4");
             }else{
                 string memory = (funcName->tempVar.find(val1))->second.tiggerName;
-                tiggerCode.push_back("\tt5 = "+val2->s);
-                if(memory[0]!='a') tiggerCode.push_back("\tstore t5 "+memory);
-                else tiggerCode.push_back("\t"+memory+" = t5");
+                //tiggerCode.push_back("\tt5 = "+val2->s);
+                if(memory[0]!='a'){
+                    tiggerCode.push_back("\tt5 = "+val2->s);
+                    tiggerCode.push_back("\tstore t5 "+memory);
+                } 
+                else{
+                    //tiggerCode.push_back("\tt5 = "+val2->s);
+                    tiggerCode.push_back("\t"+memory+" = "+val2->s);
+                }
             }
         }else{
             if(ifGlobal(val1)){
@@ -279,6 +285,8 @@ void AssignAST_2::generator(){
                     EntryIT it = globalVar.find(val2->s);
                     if(it->second.isArray==0)tiggerCode.push_back("\tload  "+ it->second.tiggerName+"  t4");
                     else {tiggerCode.push_back("\tloadaddr  "+ it->second.tiggerName+"  t4");}
+                    tiggerCode.push_back("\tloadaddr  "+(globalVar.find(val1))->second.tiggerName+"  t3");
+                    tiggerCode.push_back("\tt3[0] = t4");
                 }else{
                     //全局 = 局部
                     EntryIT it = funcName->tempVar.find(val2->s);
@@ -286,30 +294,65 @@ void AssignAST_2::generator(){
                     if(memory[0]!='a'){
                         if(it->second.isArray==0)tiggerCode.push_back("\tload  "+memory+"  t4");
                         else {tiggerCode.push_back("\tloadaddr  "+memory+"  t4");}
+                        tiggerCode.push_back("\tloadaddr  "+(globalVar.find(val1))->second.tiggerName+"  t3");
+                        tiggerCode.push_back("\tt3[0] = t4");
                     }
-                    else{tiggerCode.push_back("\tt4 = "+memory);}
+                    else{
+                        //tiggerCode.push_back("\tt4 = "+memory);
+                        tiggerCode.push_back("\tloadaddr  "+(globalVar.find(val1))->second.tiggerName+"  t3");
+                        tiggerCode.push_back("\tt3[0] = "+memory);
+                    }
+                    
                 }
-                tiggerCode.push_back("\tloadaddr  "+(globalVar.find(val1))->second.tiggerName+"  t3");
-                tiggerCode.push_back("\tt3[0] = t4");
+        
             }else{
                 if(ifGlobal(val2->s)){
                     //局部 = 全局
                     EntryIT it = globalVar.find(val2->s);
-                    if(it->second.isArray==0)tiggerCode.push_back("\tload  "+ it->second.tiggerName+"  t4");
+                    if(it->second.isArray==0) tiggerCode.push_back("\tload  "+ it->second.tiggerName+"  t4");
                     else {tiggerCode.push_back("\tloadaddr  "+ it->second.tiggerName+"  t4");}
+
+                    string memoryLeft = (funcName->tempVar.find(val1))->second.tiggerName;
+                    if(memoryLeft[0]!='a') tiggerCode.push_back("\tstore t4 "+memoryLeft);
+                    else {tiggerCode.push_back("\t"+memoryLeft+" = t4");}
                 }else{
                     //局部 = 局部
                     EntryIT it = (funcName->tempVar.find(val2->s));
                     string memory = it->second.tiggerName;
                     if(memory[0]!='a'){
-                        if(it->second.isArray==0)tiggerCode.push_back("\tload  "+memory+"  t4");
-                        else{tiggerCode.push_back("\tloadaddr  "+memory+"  t4");}
+                        if(it->second.isArray==0){
+                            string memoryLeft = (funcName->tempVar.find(val1))->second.tiggerName;
+                            if(memoryLeft[0]!='a'){
+                                tiggerCode.push_back("\tload  "+memory+"  t4");                                
+                                tiggerCode.push_back("\tstore t4 "+memoryLeft);
+                            } else {
+                                tiggerCode.push_back("\tload  "+memory+"  "+memoryLeft);
+                            }
+
+                        } else {
+
+                            string memoryLeft = (funcName->tempVar.find(val1))->second.tiggerName;
+                            
+                            if(memoryLeft[0]!='a'){
+                                tiggerCode.push_back("\tloadaddr  "+memory+"  t4");
+                                tiggerCode.push_back("\tstore t4 "+memoryLeft);
+                            } else {
+                                tiggerCode.push_back("\tloadaddr  "+memory+"  "+memoryLeft);
+                            }
+
+                        }
+                    } else {
+
+                        string memoryLeft = (funcName->tempVar.find(val1))->second.tiggerName;
+                        if(memoryLeft[0]!='a'){
+                            tiggerCode.push_back("\tstore "+memory+" "+memoryLeft);
+                        } else {
+                            tiggerCode.push_back("\t"+memoryLeft+" = "+memory);
+                        }
                     }
-                    else {tiggerCode.push_back("\tt4 = "+memory);}
+                    
                 }
-                string memoryLeft = (funcName->tempVar.find(val1))->second.tiggerName;
-                if(memoryLeft[0]!='a') tiggerCode.push_back("\tstore t4 "+memoryLeft);
-                else {tiggerCode.push_back("\t"+memoryLeft+" = t4");}
+                
             }
         }
         break;
@@ -332,22 +375,30 @@ void AssignAST_2::generator(){
         //get t2
         if(ifGlobal(val2->s)){
             tiggerCode.push_back("\tload "+(globalVar.find(val2->s))->second.tiggerName+"  t2");
+            tiggerCode.push_back("\tt4 = t1 + t2");
         }else{
             if(val2->isNum){
-                tiggerCode.push_back("\tt2 = "+val2->s);
+                //tiggerCode.push_back("\tt2 = "+val2->s);
+                tiggerCode.push_back("\tt4 = t1 + "+val2->s);
             }else{
             string memory2 = (funcName->tempVar.find(val2->s))->second.tiggerName;
-            if(memory2[0]!='a') tiggerCode.push_back("\tload "+memory2+" t2");
-            else tiggerCode.push_back("\tt2 = "+memory2);
+            if(memory2[0]!='a') {
+                tiggerCode.push_back("\tload "+memory2+" t2");
+                tiggerCode.push_back("\tt4 = t1 + t2");
+            }
+            else {
+                //tiggerCode.push_back("\tt2 = "+memory2);
+                tiggerCode.push_back("\tt4 = t1 + "+memory2);
+            }
             }
         }
-        tiggerCode.push_back("\tt4 = t1 + t2");
+
+        //get t3
         if(val3->isNum){
             tiggerCode.push_back("\tt3 = "+val3->s);
             tiggerCode.push_back("\tt4[0] = t3");
             break;
         }
-        //get t3
         if(ifGlobal(val3->s)){
             EntryIT it = globalVar.find(val3->s);
             if(it->second.isArray==0) tiggerCode.push_back("\tload "+ it->second.tiggerName+"  t3");
@@ -384,15 +435,17 @@ void AssignAST_2::generator(){
         //get t3
         if(ifGlobal(val3->s)){
             tiggerCode.push_back("\tload "+(globalVar.find(val3->s))->second.tiggerName+"  t3");
+            tiggerCode.push_back("\tt4 = t2 + t3");
         }else{
-            if(val3->isNum){tiggerCode.push_back("\tt3 = "+val3->s);}
+            if(val3->isNum){tiggerCode.push_back("\tt4 = t2 + "+val3->s);}
             else{
-            string memory3 = (funcName->tempVar.find(val3->s))->second.tiggerName;
-            if(memory3[0]!='a') tiggerCode.push_back("\tload "+memory3+" t3");
-            else tiggerCode.push_back("\tt3 = "+memory3);
+                string memory3 = (funcName->tempVar.find(val3->s))->second.tiggerName;
+                if(memory3[0]!='a') tiggerCode.push_back("\tload "+memory3+" t3");
+                else tiggerCode.push_back("\tt3 = "+memory3);
+                tiggerCode.push_back("\tt4 = t2 + t3");
             }
         }
-        tiggerCode.push_back("\tt4 = t2 + t3");
+        //tiggerCode.push_back("\tt4 = t2 + t3");
         //get t1
         if(ifGlobal(val1)){
             tiggerCode.push_back("\tloadaddr "+(globalVar.find(val1))->second.tiggerName+"  t1");
@@ -507,7 +560,7 @@ void RetAST::generator(){
     if(isVoid)  tiggerCode.push_back("\treturn");
     else{
         if(dynamic_cast<FunHeadAST*>(funcName->head)->funName=="f_main"){
-            tiggerCode.push_back("\ta0 = 10\n\tcall f_putch");
+            //tiggerCode.push_back("\ta0 = 10\n\tcall f_putch");
         }
         if(retVal->isNum == 0){
             if(ifGlobal(retVal->s)){
@@ -565,26 +618,25 @@ void ParamAST::generator(){
     }
     else{
         //参数是一个变量
-        //todo***
         if(ifGlobal(p->s)){
             //全局变量
             EntryIT it = globalVar.find(p->s);
-            if(it->second.isArray==0)tiggerCode.push_back("\tload  "+ it->second.tiggerName+"  t5");
-            else {tiggerCode.push_back("\tloadaddr  "+ it->second.tiggerName+"  t5");}
-            tiggerCode.push_back("\ta"+ num2string_2(nowParam) + " = t5");
+            string an = "a"+ num2string_2(nowParam);
+            if(it->second.isArray==0)tiggerCode.push_back("\tload  "+ it->second.tiggerName+"  "+an);
+            else {tiggerCode.push_back("\tloadaddr  "+ it->second.tiggerName+"  "+an);}
         } else {
             //局部变量
             EntryIT it = (funcName->tempVar.find(p->s));
             string memory = it->second.tiggerName;
+            string an = "a"+ num2string_2(nowParam);
             if(memory[0]!='a'){
-                if(it->second.isArray==0)tiggerCode.push_back("\tload  "+memory+"  t5");
-                else tiggerCode.push_back("\tloadaddr  "+memory+"  t5");
+                if(it->second.isArray==0)tiggerCode.push_back("\tload  "+memory+"  "+an);
+                else tiggerCode.push_back("\tloadaddr  "+memory+"  "+an);
             }
             else {
                 //***调用自己的参数
-                tiggerCode.push_back("\tload  "+num2string_2(stackV-(memory[1]-'0')-1)+" t5");
+                tiggerCode.push_back("\tload  "+num2string_2(stackV-(memory[1]-'0')-1)+" "+an);
             }
-            tiggerCode.push_back("\ta"+ num2string_2(nowParam) + " = t5");
         }
     }
     nowParam++;

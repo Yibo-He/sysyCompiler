@@ -332,7 +332,7 @@ class ListTree: public BaseAST{
         BaseAST* astptr; // 如果数组声明含有表达式，则指向这个exp
         
         ListTree():BaseAST(),astptr(nullptr) { type=ListTree_; } 
-        ListTree(Token* l, Token* r):BaseAST(), astptr(nullptr) { type=ListTree_; }// '{' '}', 空
+        ListTree(Token1* l, Token1* r):BaseAST(), astptr(nullptr) { type=ListTree_; }// '{' '}', 空
         ListTree(BaseAST* astptr):BaseAST(), astptr(astptr) { type=ListTree_; } // 叶子节点
 
         ~ListTree() {
