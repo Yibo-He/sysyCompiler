@@ -1,0 +1,3 @@
+[submodule "sysyCompiler"]
+	path = sysyCompiler
+	url = https://github.com/Yibo-He/sysyCompiler.git
